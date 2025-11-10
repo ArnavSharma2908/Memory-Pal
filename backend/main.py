@@ -38,7 +38,7 @@ async def upload_pdf(file: UploadFile = File(...)):
 
 # --- Get Random Flashcard ---
 @app.get("/flashcard/")
-async def get_random_flashcard():
+async def get_flashcard():
     flashcard = random.choice(FLASHCARDS)
     return flashcard
 
