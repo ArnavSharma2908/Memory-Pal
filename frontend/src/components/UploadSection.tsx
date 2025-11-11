@@ -5,12 +5,15 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 
 interface UploadSectionProps {
-  onUpload: (file: File) => void;
+  onUpload?: (file: File) => void;
 }
 
 export const UploadSection = ({ onUpload }: UploadSectionProps) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const BACKEND_URL = "http://127.0.0.1:8000/upload-pdf";
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -27,7 +30,7 @@ export const UploadSection = ({ onUpload }: UploadSectionProps) => {
 
     const file = e.dataTransfer.files[0];
     if (file && file.type === "application/pdf") {
-      onUpload(file);
+      uploadFile(file);
     } else {
       toast.error("Please upload a PDF file");
     }
@@ -36,11 +39,56 @@ export const UploadSection = ({ onUpload }: UploadSectionProps) => {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && file.type === "application/pdf") {
-      onUpload(file);
+      uploadFile(file);
     } else {
       toast.error("Please upload a PDF file");
     }
   };
+
+  const uploadFile = async (file: File) => {
+  setIsUploading(true);
+  toast.info("Uploading file... Please wait.");
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000); // 60s timeout
+
+    const response = await fetch(BACKEND_URL, {
+      method: "POST",
+      body: formData,
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+    setIsUploading(false);
+
+    if (response.ok) {
+      toast.success("File uploaded successfully!");
+      const data = await response.json();
+      console.log("Server response:", data);
+      if (onUpload) onUpload(file);
+    } else {
+      const errorText = await response.text();
+      toast.error(`Upload failed: ${errorText || response.statusText}`);
+    }
+  } catch (error) {
+    setIsUploading(false);
+
+    // ✅ Properly narrow the error type
+    if (error instanceof DOMException && error.name === "AbortError") {
+      toast.error("Request timed out. Server took too long to respond.");
+    } else if (error instanceof TypeError) {
+      toast.error("Network error. Please check your connection.");
+    } else {
+      console.error("Upload error:", error);
+      toast.error("Unexpected error occurred during upload.");
+    }
+  }
+};
+
 
   return (
     <div className="min-h-[calc(100vh-80px)] flex items-center justify-center p-4">
@@ -65,7 +113,7 @@ export const UploadSection = ({ onUpload }: UploadSectionProps) => {
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => !isUploading && fileInputRef.current?.click()}
         >
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="p-6 rounded-full bg-primary/10">
@@ -73,14 +121,21 @@ export const UploadSection = ({ onUpload }: UploadSectionProps) => {
             </div>
             <div className="space-y-2">
               <p className="text-xl font-semibold">
-                Drop your PDF here or click to browse
+                {isUploading
+                  ? "Uploading... please wait"
+                  : "Drop your PDF here or click to browse"}
               </p>
               <p className="text-sm text-muted-foreground">
                 Supported format: PDF (Max 50MB)
               </p>
             </div>
-            <Button variant="default" size="lg" className="mt-4">
-              Choose File
+            <Button
+              variant="default"
+              size="lg"
+              className="mt-4"
+              disabled={isUploading}
+            >
+              {isUploading ? "Uploading..." : "Choose File"}
             </Button>
           </div>
           <input
