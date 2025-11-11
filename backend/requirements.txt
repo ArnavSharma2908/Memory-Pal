@@ -3,4 +3,4 @@ uvicorn
 python-multipart
 pdfminer.six
 python-dotenv
-google-generativeai
+cohere

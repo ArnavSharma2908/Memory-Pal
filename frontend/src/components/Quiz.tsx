@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { CheckCircle2, XCircle, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { getTest } from "@/api";
@@ -66,30 +64,38 @@ export const Quiz = ({ day, onComplete, onBack, reviewMode = false }: QuizProps)
   const progress = ((currentQuestion + 1) / questions.length) * 100;
 
   const handleNext = () => {
-    if (selectedAnswer !== null) {
-      const newAnswers = [...answers];
-      newAnswers[currentQuestion] = selectedAnswer;
-      setAnswers(newAnswers);
+    // Save current answer (can be null for skipped questions)
+    const newAnswers = [...answers];
+    newAnswers[currentQuestion] = selectedAnswer;
+    setAnswers(newAnswers);
 
-      if (currentQuestion < questions.length - 1) {
-        setCurrentQuestion(currentQuestion + 1);
-        setSelectedAnswer(answers[currentQuestion + 1]);
-      } else {
-        // Calculate score (correct_answer is 1-indexed, selectedAnswer is 0-indexed)
-        const correct = newAnswers.filter(
-          (answer, idx) => answer !== null && answer === questions[idx].correct_answer - 1
-        ).length;
-        const score = Math.round((correct / questions.length) * 100);
-        onComplete(score);
-      }
+    if (currentQuestion < questions.length - 1) {
+      setCurrentQuestion(currentQuestion + 1);
+      setSelectedAnswer(newAnswers[currentQuestion + 1] ?? null);
+    } else {
+      // Calculate score (correct_answer is 1-indexed, selectedAnswer is 0-indexed)
+      const correct = newAnswers.filter(
+        (answer, idx) => answer !== null && answer === questions[idx].correct_answer - 1
+      ).length;
+      const score = Math.round((correct / questions.length) * 100);
+      onComplete(score);
     }
   };
 
   const handlePrevious = () => {
     if (currentQuestion > 0) {
+      // Save current answer before moving
+      const newAnswers = [...answers];
+      newAnswers[currentQuestion] = selectedAnswer;
+      setAnswers(newAnswers);
+      
       setCurrentQuestion(currentQuestion - 1);
-      setSelectedAnswer(answers[currentQuestion - 1]);
+      setSelectedAnswer(answers[currentQuestion - 1] ?? null);
     }
+  };
+
+  const handleClearChoice = () => {
+    setSelectedAnswer(null);
   };
 
   const question = questions[currentQuestion];
@@ -132,59 +138,61 @@ export const Quiz = ({ day, onComplete, onBack, reviewMode = false }: QuizProps)
             <h2 className="text-2xl font-bold mb-6">{question.question}</h2>
           </div>
 
-          <RadioGroup
-            value={selectedAnswer?.toString()}
-            onValueChange={(value) => setSelectedAnswer(parseInt(value))}
-            disabled={reviewMode}
-          >
-            <div className="space-y-3">
-              {question.options.map((option, index) => {
-                const isSelected = selectedAnswer === index;
-                const isCorrectOption = index === question.correct_answer - 1;
-                const showCorrect = reviewMode && isCorrectOption;
-                const showIncorrect = reviewMode && isSelected && !isCorrectOption;
+          <div className="space-y-3">
+            {question.options.map((option, index) => {
+              const isSelected = selectedAnswer === index;
+              const isCorrectOption = index === question.correct_answer - 1;
+              const showCorrect = reviewMode && isCorrectOption;
+              const showIncorrect = reviewMode && isSelected && !isCorrectOption;
 
-                return (
-                  <div
-                    key={index}
-                    className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all ${
-                      showCorrect
-                        ? "border-success bg-success-light"
-                        : showIncorrect
-                        ? "border-destructive bg-destructive/10"
-                        : isSelected
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/50"
-                    }`}
-                  >
-                    <RadioGroupItem value={index.toString()} id={`option-${index}`} />
-                    <Label
-                      htmlFor={`option-${index}`}
-                      className="flex-1 cursor-pointer flex items-center justify-between"
-                    >
-                      <span>{option}</span>
-                      {showCorrect && <CheckCircle2 className="h-5 w-5 text-success" />}
-                      {showIncorrect && <XCircle className="h-5 w-5 text-destructive" />}
-                    </Label>
+              return (
+                <button
+                  key={index}
+                  onClick={() => !reviewMode && setSelectedAnswer(index)}
+                  disabled={reviewMode}
+                  className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                    showCorrect
+                      ? "border-success bg-success-light"
+                      : showIncorrect
+                      ? "border-destructive bg-destructive/10"
+                      : isSelected
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span>{option}</span>
+                    {showCorrect && <CheckCircle2 className="h-5 w-5 text-success" />}
+                    {showIncorrect && <XCircle className="h-5 w-5 text-destructive" />}
                   </div>
-                );
-              })}
-            </div>
-          </RadioGroup>
+                </button>
+              );
+            })}
+          </div>
 
-          <div className="flex justify-between pt-6">
-            <Button variant="outline" onClick={handlePrevious} disabled={currentQuestion === 0}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Previous
-            </Button>
-            <Button
-              onClick={handleNext}
-              disabled={selectedAnswer === null}
-              className="gap-2"
-            >
-              {currentQuestion === questions.length - 1 ? "Finish" : "Next"}
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+          <div className="space-y-4">
+            {selectedAnswer !== null && (
+              <div className="flex justify-center">
+                <Button 
+                  variant="outline" 
+                  onClick={handleClearChoice}
+                  size="sm"
+                >
+                  Clear Choice
+                </Button>
+              </div>
+            )}
+            
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={handlePrevious} disabled={currentQuestion === 0}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Previous
+              </Button>
+              <Button onClick={handleNext} className="gap-2">
+                {currentQuestion === questions.length - 1 ? "Finish" : "Skip / Next"}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </Card>

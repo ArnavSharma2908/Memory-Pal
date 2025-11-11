@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import { UploadSection } from "@/components/UploadSection";
 import { StudyDashboard } from "@/components/StudyDashboard";
@@ -10,13 +10,53 @@ import { ThemeProvider } from "next-themes";
 type AppView = "upload" | "dashboard" | "quiz" | "flashcards";
 
 const Index = () => {
-  const [currentView, setCurrentView] = useState<AppView>("upload");
+  const [currentView, setCurrentView] = useState<AppView>(() => {
+    const saved = localStorage.getItem("currentView");
+    return (saved as AppView) || "upload";
+  });
   const [textSize, setTextSize] = useState(1);
   const [currentTestDay, setCurrentTestDay] = useState<number>(1);
-  const [studyEnded, setStudyEnded] = useState(false);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [completedTests, setCompletedTests] = useState<number[]>([]);
-  const [testScores, setTestScores] = useState<Record<number, number>>({});
+  const [studyEnded, setStudyEnded] = useState(() => {
+    const saved = localStorage.getItem("studyEnded");
+    return saved === "true";
+  });
+  const [uploadedFile, setUploadedFile] = useState<File | null>(() => {
+    const saved = localStorage.getItem("uploadedFileName");
+    return saved ? { name: saved } as File : null;
+  });
+  const [completedTests, setCompletedTests] = useState<number[]>(() => {
+    const saved = localStorage.getItem("completedTests");
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [testScores, setTestScores] = useState<Record<number, number>>(() => {
+    const saved = localStorage.getItem("testScores");
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  // Save to localStorage whenever state changes
+  useEffect(() => {
+    localStorage.setItem("currentView", currentView);
+  }, [currentView]);
+
+  useEffect(() => {
+    localStorage.setItem("studyEnded", studyEnded.toString());
+  }, [studyEnded]);
+
+  useEffect(() => {
+    if (uploadedFile) {
+      localStorage.setItem("uploadedFileName", uploadedFile.name);
+    } else {
+      localStorage.removeItem("uploadedFileName");
+    }
+  }, [uploadedFile]);
+
+  useEffect(() => {
+    localStorage.setItem("completedTests", JSON.stringify(completedTests));
+  }, [completedTests]);
+
+  useEffect(() => {
+    localStorage.setItem("testScores", JSON.stringify(testScores));
+  }, [testScores]);
 
   const handleUpload = (file: File) => {
     setUploadedFile(file);
@@ -61,6 +101,12 @@ const Index = () => {
       setStudyEnded(false);
       setCompletedTests([]);
       setTestScores({});
+      // Clear localStorage
+      localStorage.removeItem("currentView");
+      localStorage.removeItem("uploadedFileName");
+      localStorage.removeItem("studyEnded");
+      localStorage.removeItem("completedTests");
+      localStorage.removeItem("testScores");
       toast.success("Study deleted successfully");
     }
   };

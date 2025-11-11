@@ -2,15 +2,14 @@ import io, os, statistics, json
 from typing import List, Dict
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LTTextContainer, LTChar
-import google.generativeai as genai
+import cohere
 from dotenv import load_dotenv
 
 load_dotenv()
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+co = cohere.Client(os.getenv("COHERE_API_KEY"))
 
 def get_major_topics(outline_text: str) -> List[str]:
     try:
-        model = genai.GenerativeModel("gemini-2.5-flash")
         prompt = f"""You have this outline of topics from a document:
 {outline_text}
 
@@ -19,7 +18,7 @@ Identify and return ONLY the 4-6 most major, important topics that should be stu
 Return ONLY a JSON array of strings, no markdown:
 ["Topic 1", "Topic 2", "Topic 3", "Topic 4"]"""
         
-        response = model.generate_content(prompt)
+        response = co.chat(message=prompt, model="command-r-08-2024")
         try:
             major = json.loads(response.text)
             if isinstance(major, list) and 4 <= len(major) <= 6:
