@@ -1,9 +1,153 @@
-# 🧠 Smart Memory Coach
+# 🧠 Memory-Pal
 
-An AI-driven learning assistant that helps students memorize smarter using spaced repetition, active recall, and visualization. It predicts forgetting curves, auto-generates flashcards and quizzes, and enables collaborative, gamified study sessions.
+An AI-powered adaptive learning platform that transforms your PDFs into personalized 7-day study plans with daily tests and interactive flashcards.
 
-## ⚙️ Tech Stack
-Django • React • MySQL • Scikit-learn • spaCy • BeautifulSoup • Docker
+---
 
-## 🎯 Goal
-To make memorization adaptive, scientific, and engaging for competitive learners.
+## ✨ Features
+
+- � **PDF Processing**: Upload any PDF and extract meaningful content
+- 🤖 **AI-Powered Analysis**: Uses Cohere AI to generate major topics
+- 📅 **7-Day Study Plan**: Automatically creates a structured learning schedule
+- 📝 **Daily Tests**: Generate custom tests for each day's material
+- 🎴 **Flashcards**: Interactive flashcards for better retention
+- 📊 **Progress Tracking**: Monitor your learning journey
+
+---
+
+## 🛠️ Tech Stack
+
+### Backend
+- **FastAPI**: Modern Python web framework
+- **Cohere AI**: command-r-08-2024 model for content generation
+- **pdfminer.six**: PDF text extraction
+- **uvicorn**: ASGI server
+
+### Frontend
+- **React 18**: UI library
+- **TypeScript**: Type-safe JavaScript
+- **Vite**: Lightning-fast build tool
+- **TailwindCSS**: Utility-first CSS framework
+- **shadcn/ui**: Beautiful UI components
+- **Sonner**: Toast notifications
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Python 3.11+
+- Node.js 18+
+- npm or yarn
+- Cohere API Key ([Get one here](https://cohere.ai/))
+
+---
+
+## 📦 Backend Setup
+
+### 1️⃣ Navigate to Backend Directory
+```cmd
+cd backend
+```
+
+### 2️⃣ Create Virtual Environment
+```cmd
+python -m venv venv
+```
+
+### 3️⃣ Activate Virtual Environment
+```cmd
+venv\Scripts\activate
+```
+
+### 4️⃣ Install Dependencies
+```cmd
+pip install -r requirements.txt
+```
+
+### 5️⃣ Create Environment File
+Create a `.env` file in the `backend` directory:
+```env
+COHERE_API_KEY=your_cohere_api_key_here
+```
+
+### 6️⃣ Start Backend Server
+```cmd
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+✅ Backend will be running at **http://localhost:8000**
+
+---
+
+## 🎨 Frontend Setup
+
+### 1️⃣ Navigate to Frontend Directory
+```cmd
+cd frontend
+```
+
+### 2️⃣ Install Dependencies
+```cmd
+npm install
+```
+
+### 3️⃣ Start Development Server
+```cmd
+npm run dev
+```
+
+✅ Frontend will be running at **http://localhost:8080**
+
+---
+
+## 📂 Project Structure
+
+```
+📦 Sem 5 Mini Project
+├── 📁 backend/
+│   ├── main.py              # FastAPI application
+│   ├── requirements.txt     # Python dependencies
+│   ├── Dockerfile          # Backend Docker config
+│   └── .env                # Environment variables
+│
+├── 📁 frontend/
+│   ├── src/
+│   │   ├── components/     # React components
+│   │   ├── api/           # API integration
+│   │   └── App.tsx        # Main app component
+│   ├── package.json        # Node dependencies
+│   ├── vite.config.ts     # Vite configuration
+│   └── Dockerfile         # Frontend Docker config
+│
+├── docker-compose.yml      # Multi-container orchestration
+└── README.md              # You are here!
+```
+
+---
+
+## 🔌 API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/upload-pdf` | Upload PDF and extract text |
+| `POST` | `/generate-topics` | Generate major topics from text |
+| `POST` | `/generate-study-plan` | Create 7-day study plan |
+| `POST` | `/generate-test` | Generate daily test questions |
+| `POST` | `/generate-flashcards` | Create flashcards for topics |
+
+---
+
+## 💡 Usage
+
+1. **Upload PDF**: Click the upload button and select your study material
+2. **View Topics**: AI automatically extracts major topics from your PDF
+3. **Get Study Plan**: Generate a personalized 7-day learning schedule
+4. **Take Tests**: Complete daily tests to reinforce learning
+5. **Use Flashcards**: Review with interactive flashcards
+
+
+---
+
+**Thank You! 🎓**
