@@ -33,14 +33,25 @@ An AI-powered adaptive learning platform that transforms your PDFs into personal
 
 ---
 
-## 🚀 Getting Started
+## � Installation
 
 ### Prerequisites
 
 - Python 3.11+
 - Node.js 18+
 - npm or yarn
+- Git
 - Cohere API Key ([Get one here](https://cohere.ai/))
+
+### 1️⃣ Clone the Repository
+```cmd
+git clone https://github.com/ArnavSharma2908/Memory-Pal.git
+```
+
+### 2️⃣ Navigate to Project Directory
+```cmd
+cd Memory-Pal
+```
 
 ---
 
@@ -83,10 +94,11 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 ## 🎨 Frontend Setup
 
-### 1️⃣ Navigate to Frontend Directory
+### 1️⃣ Open New Terminal & Navigate to Frontend Directory
 ```cmd
 cd frontend
 ```
+> **Note**: Make sure you're in the project root directory (Memory-Pal) before running this command.
 
 ### 2️⃣ Install Dependencies
 ```cmd
