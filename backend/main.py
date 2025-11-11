@@ -9,8 +9,6 @@ from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 
 
-
-
 load_dotenv()
 co = cohere.Client(os.getenv("COHERE_API_KEY"))
 
@@ -49,7 +47,7 @@ async def get_flashcard():
         raise HTTPException(status_code=404, detail="No topics available. Upload a PDF first.")
     
     topic = random.choice(major_topics)
-    prompt = f"""Generate ONE flashcard question and answer about the topic: {topic}
+    prompt = f"""Generate ONE unique yet academic flashcard question by searching internet along with corresponding answer about the topic: {topic}
 
 Return ONLY valid JSON with no markdown, no code blocks, no extra text:
 {{"question": "question text here", "answer": "answer text here"}}"""
@@ -91,7 +89,7 @@ async def get_test(test_id: int):
 
     async def generate_question(qnum: int):
         topic = random.choice(major_topics)
-        prompt = f"""Create ONE multiple-choice question (with four options) about this topic: {topic}
+        prompt = f"""Create ONE unique yet academic sticked multiple-choice question (with four options) about this topic.: {topic}
 
 The JSON object MUST have exactly these keys and no extra text or markdown:
 {{"question": "Question {qnum} of Test {test_id}: <question text>", "options": ["opt1", "opt2", "opt3", "opt4"], "correct_answer": 1}}

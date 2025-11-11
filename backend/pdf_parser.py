@@ -13,7 +13,7 @@ def get_major_topics(outline_text: str) -> List[str]:
         prompt = f"""You have this outline of topics from a document:
 {outline_text}
 
-Identify and return ONLY the 4-6 most major, important topics that should be studied first. These should be the main chapters/sections, not sub-topics.
+Identify and return ONLY the 8-9 most major, important topics that should be studied first. These should be the main chapters/sections, not sub-topics.
 
 Return ONLY a JSON array of strings, no markdown:
 ["Topic 1", "Topic 2", "Topic 3", "Topic 4"]"""
@@ -21,7 +21,7 @@ Return ONLY a JSON array of strings, no markdown:
         response = co.chat(message=prompt, model="command-r-08-2024")
         try:
             major = json.loads(response.text)
-            if isinstance(major, list) and 4 <= len(major) <= 6:
+            if isinstance(major, list) and 6 <= len(major) <= 10:
                 return major
         except json.JSONDecodeError:
             text = response.text
@@ -73,7 +73,7 @@ def parse(pdf_bytes, metadata=None) -> List[Dict[str, str]]:
         outline_text = ", ".join(l["text"].strip() for l in lines if l.get("level") in (1, 2)) or "No outline"
         
         major_topics = get_major_topics(outline_text)
-        
+        print(major_topics,outline_text,sep="\n")
         return major_topics
     except Exception as e:
         return []
