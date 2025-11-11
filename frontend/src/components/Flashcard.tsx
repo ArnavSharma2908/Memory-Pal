@@ -5,12 +5,6 @@ import { ArrowLeft, ArrowRight, RotateCw, X, Loader2, AlertCircle } from "lucide
 import { getFlashcard } from "@/api";
 import { toast } from "sonner";
 
-const FLASHCARDS_STORAGE_KEYS = {
-  DECK: "flashcardsDeck",
-  INDEX: "flashcardsIndex",
-  FLIPPED: "flashcardsFlipped",
-} as const;
-
 interface FlashcardData {
   question: string;
   answer: string;
@@ -27,45 +21,19 @@ export const Flashcard = ({ onClose }: FlashcardProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load from storage or fetch first card on mount
+  // Fetch initial flashcard on mount
   useEffect(() => {
-    try {
-      const savedDeckRaw = localStorage.getItem(FLASHCARDS_STORAGE_KEYS.DECK);
-      if (savedDeckRaw) {
-        const parsed: unknown = JSON.parse(savedDeckRaw);
-        if (Array.isArray(parsed)) {
-          const deck = parsed.filter(
-            (c): c is FlashcardData => typeof c === "object" && c !== null && "question" in c && "answer" in c
-          );
-          if (deck.length) {
-            setFlashcards(deck);
-            const savedIndex = localStorage.getItem(FLASHCARDS_STORAGE_KEYS.INDEX);
-            const idx = savedIndex ? Math.min(Math.max(parseInt(savedIndex, 10), 0), deck.length - 1) : 0;
-            setCurrentIndex(idx);
-            const flippedRaw = localStorage.getItem(FLASHCARDS_STORAGE_KEYS.FLIPPED);
-            setIsFlipped(flippedRaw ? flippedRaw === "true" : false);
-            return;
-          }
-        }
-      }
-    } catch (e) {
-      console.warn("Flashcard restore failed", e);
-    }
-    void appendFlashcard();
+    fetchFlashcard();
   }, []);
 
-  // Append a new flashcard and move index to the new card
-  const appendFlashcard = async () => {
+  const fetchFlashcard = async () => {
     try {
       setLoading(true);
       setError(null);
       const data = await getFlashcard();
-      if (data?.question && data?.answer) {
-        setFlashcards((prev) => {
-          const next = [...prev, { question: data.question, answer: data.answer }];
-          setCurrentIndex(next.length - 1);
-          return next;
-        });
+      
+      if (data.question && data.answer) {
+        setFlashcards((prev) => [...prev, data]);
       } else {
         throw new Error("Invalid flashcard data");
       }
@@ -80,11 +48,13 @@ export const Flashcard = ({ onClose }: FlashcardProps) => {
 
   const handleNext = async () => {
     setIsFlipped(false);
-    // If we're at the last card, fetch and append a new one
-    if (currentIndex >= flashcards.length - 1) {
-      await appendFlashcard();
+    
+    // If we're at the last card, fetch a new one
+    if (currentIndex === flashcards.length - 1) {
+      await fetchFlashcard();
+      setCurrentIndex(flashcards.length);
     } else {
-      setCurrentIndex((i) => i + 1);
+      setCurrentIndex(currentIndex + 1);
     }
   };
 
@@ -100,17 +70,6 @@ export const Flashcard = ({ onClose }: FlashcardProps) => {
       setIsFlipped(!isFlipped);
     }
   };
-
-  // Persist deck, index and flip state
-  useEffect(() => {
-    try { localStorage.setItem(FLASHCARDS_STORAGE_KEYS.DECK, JSON.stringify(flashcards)); } catch (e) { console.warn(e); }
-  }, [flashcards]);
-  useEffect(() => {
-    try { localStorage.setItem(FLASHCARDS_STORAGE_KEYS.INDEX, String(currentIndex)); } catch (e) { console.warn(e); }
-  }, [currentIndex]);
-  useEffect(() => {
-    try { localStorage.setItem(FLASHCARDS_STORAGE_KEYS.FLIPPED, String(isFlipped)); } catch (e) { console.warn(e); }
-  }, [isFlipped]);
 
   const currentCard = flashcards[currentIndex];
 
@@ -144,7 +103,7 @@ export const Flashcard = ({ onClose }: FlashcardProps) => {
               <h3 className="text-lg font-semibold mb-2">Failed to Load</h3>
               <p className="text-sm text-muted-foreground mb-4">{error}</p>
               <div className="flex gap-2 justify-center">
-                <Button onClick={appendFlashcard} size="sm">
+                <Button onClick={fetchFlashcard} size="sm">
                   Try Again
                 </Button>
                 <Button onClick={onClose} variant="outline" size="sm">
