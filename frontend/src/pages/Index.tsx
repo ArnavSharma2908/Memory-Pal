@@ -15,6 +15,8 @@ const Index = () => {
   const [currentTestDay, setCurrentTestDay] = useState<number>(1);
   const [studyEnded, setStudyEnded] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [completedTests, setCompletedTests] = useState<number[]>([]);
+  const [testScores, setTestScores] = useState<Record<number, number>>({});
 
   const handleUpload = (file: File) => {
     setUploadedFile(file);
@@ -33,6 +35,9 @@ const Index = () => {
 
   const handleQuizComplete = (score: number) => {
     toast.success(`Test completed! Your score: ${score}%`);
+    // Mark current test as completed and store score
+    setCompletedTests((prev) => [...prev, currentTestDay]);
+    setTestScores((prev) => ({ ...prev, [currentTestDay]: score }));
     setCurrentView("dashboard");
   };
 
@@ -54,12 +59,14 @@ const Index = () => {
       setCurrentView("upload");
       setUploadedFile(null);
       setStudyEnded(false);
+      setCompletedTests([]);
+      setTestScores({});
       toast.success("Study deleted successfully");
     }
   };
 
-  // Check if all tests are completed (mock logic)
-  const allTestsCompleted = false; // In real app, this would check actual test completion
+  // Check if all tests are completed
+  const allTestsCompleted = completedTests.length === 7;
 
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
@@ -81,6 +88,8 @@ const Index = () => {
             onStartTest={handleStartTest}
             onOpenFlashcards={handleOpenFlashcards}
             studyTitle={uploadedFile?.name.replace(".pdf", "")}
+            completedTests={completedTests}
+            testScores={testScores}
           />
         )}
 

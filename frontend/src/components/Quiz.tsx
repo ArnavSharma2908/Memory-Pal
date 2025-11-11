@@ -1,16 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, XCircle, ArrowRight, ArrowLeft } from "lucide-react";
+import { CheckCircle2, XCircle, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { getTest } from "@/api";
+import { toast } from "sonner";
 
 interface Question {
-  id: number;
   question: string;
   options: string[];
-  correctAnswer: number;
+  correct_answer: number;
 }
 
 interface QuizProps {
@@ -21,37 +22,46 @@ interface QuizProps {
 }
 
 export const Quiz = ({ day, onComplete, onBack, reviewMode = false }: QuizProps) => {
-  // Mock questions - in real app, these come from backend
-  const questions: Question[] = [
-    {
-      id: 1,
-      question: "What is the time complexity of binary search?",
-      options: ["O(n)", "O(log n)", "O(n²)", "O(1)"],
-      correctAnswer: 1,
-    },
-    {
-      id: 2,
-      question: "Which data structure uses LIFO principle?",
-      options: ["Queue", "Stack", "Array", "Tree"],
-      correctAnswer: 1,
-    },
-    {
-      id: 3,
-      question: "What does HTML stand for?",
-      options: [
-        "Hyper Text Markup Language",
-        "High Tech Modern Language",
-        "Home Tool Markup Language",
-        "Hyperlinks and Text Markup Language",
-      ],
-      correctAnswer: 0,
-    },
-  ];
-
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [answers, setAnswers] = useState<(number | null)[]>(new Array(questions.length).fill(null));
+  const [answers, setAnswers] = useState<(number | null)[]>([]);
   const [showResult, setShowResult] = useState(reviewMode);
+
+  useEffect(() => {
+    const fetchTest = async () => {
+      try {
+        setLoading(true);
+        const data = await getTest(day);
+        setQuestions(data.questions);
+        setAnswers(new Array(data.questions.length).fill(null));
+      } catch (error) {
+        toast.error("Failed to load test questions. Please try again.");
+        onBack();
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTest();
+  }, [day, onBack]);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-4xl animate-fade-in">
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+            <p className="text-muted-foreground">Loading test questions...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (questions.length === 0) {
+    return null;
+  }
 
   const progress = ((currentQuestion + 1) / questions.length) * 100;
 
@@ -65,9 +75,9 @@ export const Quiz = ({ day, onComplete, onBack, reviewMode = false }: QuizProps)
         setCurrentQuestion(currentQuestion + 1);
         setSelectedAnswer(answers[currentQuestion + 1]);
       } else {
-        // Calculate score
+        // Calculate score (correct_answer is 1-indexed, selectedAnswer is 0-indexed)
         const correct = newAnswers.filter(
-          (answer, idx) => answer === questions[idx].correctAnswer
+          (answer, idx) => answer !== null && answer === questions[idx].correct_answer - 1
         ).length;
         const score = Math.round((correct / questions.length) * 100);
         onComplete(score);
@@ -83,7 +93,7 @@ export const Quiz = ({ day, onComplete, onBack, reviewMode = false }: QuizProps)
   };
 
   const question = questions[currentQuestion];
-  const isCorrect = reviewMode && selectedAnswer === question.correctAnswer;
+  const isCorrect = reviewMode && selectedAnswer === question.correct_answer - 1;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl animate-fade-in">
@@ -130,7 +140,7 @@ export const Quiz = ({ day, onComplete, onBack, reviewMode = false }: QuizProps)
             <div className="space-y-3">
               {question.options.map((option, index) => {
                 const isSelected = selectedAnswer === index;
-                const isCorrectOption = index === question.correctAnswer;
+                const isCorrectOption = index === question.correct_answer - 1;
                 const showCorrect = reviewMode && isCorrectOption;
                 const showIncorrect = reviewMode && isSelected && !isCorrectOption;
 

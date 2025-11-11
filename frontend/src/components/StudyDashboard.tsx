@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TestCard, TestStatus } from "./TestCard";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,26 +8,53 @@ interface StudyDashboardProps {
   onStartTest: (day: number) => void;
   onOpenFlashcards: () => void;
   studyTitle?: string;
+  completedTests?: number[];
+  testScores?: Record<number, number>;
 }
 
 export const StudyDashboard = ({
   onStartTest,
   onOpenFlashcards,
   studyTitle = "Introduction to Computer Science",
+  completedTests = [],
+  testScores = {},
 }: StudyDashboardProps) => {
-  // Mock data - in real app, this would come from backend
-  const [tests] = useState([
-    { day: 1, date: "Oct 30, 2025", status: "completed" as TestStatus, score: 85 },
-    { day: 2, date: "Oct 31, 2025", status: "completed" as TestStatus, score: 92 },
-    { day: 3, date: "Nov 1, 2025", status: "upcoming" as TestStatus },
-    { day: 4, date: "Nov 2, 2025", status: "locked" as TestStatus },
-    { day: 5, date: "Nov 3, 2025", status: "locked" as TestStatus },
-    { day: 6, date: "Nov 4, 2025", status: "locked" as TestStatus },
-    { day: 7, date: "Nov 5, 2025", status: "locked" as TestStatus },
+  const [tests, setTests] = useState([
+    { day: 1, date: "Nov 11, 2025", status: "upcoming" as TestStatus, score: undefined },
+    { day: 2, date: "Nov 12, 2025", status: "locked" as TestStatus, score: undefined },
+    { day: 3, date: "Nov 13, 2025", status: "locked" as TestStatus, score: undefined },
+    { day: 4, date: "Nov 14, 2025", status: "locked" as TestStatus, score: undefined },
+    { day: 5, date: "Nov 15, 2025", status: "locked" as TestStatus, score: undefined },
+    { day: 6, date: "Nov 16, 2025", status: "locked" as TestStatus, score: undefined },
+    { day: 7, date: "Nov 17, 2025", status: "locked" as TestStatus, score: undefined },
   ]);
 
-  const completedTests = tests.filter((t) => t.status === "completed").length;
-  const progress = (completedTests / tests.length) * 100;
+  useEffect(() => {
+    // Update test statuses and scores based on completed tests
+    setTests((prevTests) =>
+      prevTests.map((test, index) => {
+        if (completedTests.includes(test.day)) {
+          return { 
+            ...test, 
+            status: "completed" as TestStatus,
+            score: testScores[test.day] || 0
+          };
+        } else if (index === 0 || completedTests.includes(prevTests[index - 1].day)) {
+          return { ...test, status: "upcoming" as TestStatus };
+        }
+        return { ...test, status: "locked" as TestStatus };
+      })
+    );
+  }, [completedTests, testScores]);
+
+  const completedCount = tests.filter((t) => t.status === "completed").length;
+  const progress = (completedCount / tests.length) * 100;
+  
+  // Calculate average score
+  const completedScores = Object.values(testScores);
+  const averageScore = completedScores.length > 0 
+    ? completedScores.reduce((sum, score) => sum + score, 0) / completedScores.length 
+    : 0;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl animate-fade-in">
@@ -41,8 +68,12 @@ export const StudyDashboard = ({
               </p>
               <div className="flex items-center gap-4 mt-4">
                 <div className="text-sm">
-                  <span className="font-semibold text-primary">{completedTests}</span>
+                  <span className="font-semibold text-primary">{completedCount}</span>
                   <span className="text-muted-foreground"> of 7 tests completed</span>
+                </div>
+                <div className="text-sm border-l pl-4">
+                  <span className="font-semibold text-primary">{averageScore.toFixed(1)}%</span>
+                  <span className="text-muted-foreground"> average score</span>
                 </div>
               </div>
             </div>
