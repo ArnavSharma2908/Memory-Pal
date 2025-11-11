@@ -11,9 +11,10 @@ interface TestCardProps {
   status: TestStatus;
   score?: number;
   onStart?: () => void;
+  onReview?: () => void;
 }
 
-export const TestCard = ({ day, date, status, score, onStart }: TestCardProps) => {
+export const TestCard = ({ day, date, status, score, onStart, onReview }: TestCardProps) => {
   const getStatusConfig = () => {
     switch (status) {
       case "upcoming":
@@ -37,7 +38,7 @@ export const TestCard = ({ day, date, status, score, onStart }: TestCardProps) =
           ),
           icon: <CheckCircle2 className="h-5 w-5 text-success" />,
           actionButton: (
-            <Button onClick={onStart} variant="outline" className="w-full mt-4">
+            <Button onClick={onReview} variant="outline" className="w-full mt-4">
               Review Answers
             </Button>
           ),

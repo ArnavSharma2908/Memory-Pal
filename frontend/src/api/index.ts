@@ -27,3 +27,15 @@ export async function getTest(testId: number) {
 
   return response.json();
 }
+
+export async function getFlashcard() {
+  const response = await fetch(`${API_BASE}/flashcard/`, {
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch flashcard");
+  }
+
+  return response.json();
+}

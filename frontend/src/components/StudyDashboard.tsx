@@ -6,6 +6,7 @@ import { Sparkles } from "lucide-react";
 
 interface StudyDashboardProps {
   onStartTest: (day: number) => void;
+  onReviewTest: (day: number) => void;
   onOpenFlashcards: () => void;
   studyTitle?: string;
   completedTests?: number[];
@@ -14,6 +15,7 @@ interface StudyDashboardProps {
 
 export const StudyDashboard = ({
   onStartTest,
+  onReviewTest,
   onOpenFlashcards,
   studyTitle = "Introduction to Computer Science",
   completedTests = [],
@@ -105,6 +107,7 @@ export const StudyDashboard = ({
               status={test.status}
               score={test.score}
               onStart={() => onStartTest(test.day)}
+              onReview={() => onReviewTest(test.day)}
             />
           ))}
         </div>

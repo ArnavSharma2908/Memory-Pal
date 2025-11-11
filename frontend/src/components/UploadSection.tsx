@@ -3,17 +3,37 @@ import { Upload, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { uploadPdf } from "@/api";
 
 interface UploadSectionProps {
   onUpload?: (file: File) => void;
 }
+
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
 export const UploadSection = ({ onUpload }: UploadSectionProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const BACKEND_URL = "http://127.0.0.1:8000/upload-pdf";
+  const validateFile = (file: File): string | null => {
+    if (file.type !== "application/pdf") {
+      return "Please upload a PDF file";
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return "File size exceeds 50MB limit";
+    }
+    return null;
+  };
+
+  const handleFile = (file: File) => {
+    const error = validateFile(file);
+    if (error) {
+      toast.error(error);
+      return;
+    }
+    uploadFile(file);
+  };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -27,67 +47,31 @@ export const UploadSection = ({ onUpload }: UploadSectionProps) => {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-
     const file = e.dataTransfer.files[0];
-    if (file && file.type === "application/pdf") {
-      uploadFile(file);
-    } else {
-      toast.error("Please upload a PDF file");
-    }
+    if (file) handleFile(file);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && file.type === "application/pdf") {
-      uploadFile(file);
-    } else {
-      toast.error("Please upload a PDF file");
-    }
+    if (file) handleFile(file);
   };
 
   const uploadFile = async (file: File) => {
-  setIsUploading(true);
-  toast.info("Uploading file... Please wait.");
+    setIsUploading(true);
+    toast.info("Uploading and processing PDF...");
 
-  const formData = new FormData();
-  formData.append("file", file);
-
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60000); // 60s timeout
-
-    const response = await fetch(BACKEND_URL, {
-      method: "POST",
-      body: formData,
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeout);
-    setIsUploading(false);
-
-    if (response.ok) {
-      toast.success("File uploaded successfully!");
-      const data = await response.json();
-      console.log("Server response:", data);
-      if (onUpload) onUpload(file);
-    } else {
-      const errorText = await response.text();
-      toast.error(`Upload failed: ${errorText || response.statusText}`);
-    }
-  } catch (error) {
-    setIsUploading(false);
-
-    // ✅ Properly narrow the error type
-    if (error instanceof DOMException && error.name === "AbortError") {
-      toast.error("Request timed out. Server took too long to respond.");
-    } else if (error instanceof TypeError) {
-      toast.error("Network error. Please check your connection.");
-    } else {
+    try {
+      await uploadPdf(file);
+      toast.success("PDF uploaded successfully! Generating study plan...");
+      onUpload?.(file);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Upload failed";
+      toast.error(errorMessage);
       console.error("Upload error:", error);
-      toast.error("Unexpected error occurred during upload.");
+    } finally {
+      setIsUploading(false);
     }
-  }
-};
+  };
 
 
   return (
@@ -98,11 +82,10 @@ export const UploadSection = ({ onUpload }: UploadSectionProps) => {
             <FileText className="w-10 h-10 text-primary-foreground" />
           </div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-            Welcome to StudyMaster
+            Welcome to Memory-Pal
           </h1>
           <p className="text-lg text-muted-foreground max-w-md mx-auto">
-            Upload your study material and let our adaptive learning system create
-            a personalized 7-day study plan just for you.
+            Upload your PDF study material and get an AI-powered 7-day adaptive learning plan
           </p>
         </div>
 

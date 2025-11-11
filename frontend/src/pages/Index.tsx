@@ -6,32 +6,65 @@ import { Quiz } from "@/components/Quiz";
 import { Flashcard } from "@/components/Flashcard";
 import { toast } from "sonner";
 import { ThemeProvider } from "next-themes";
+import { Question } from "@/types";
 
 type AppView = "upload" | "dashboard" | "quiz" | "flashcards";
 
 const Index = () => {
+  // Check if this is a new session (app restart) or just a page refresh
+  const isNewSession = !sessionStorage.getItem("appSession");
+  
   const [currentView, setCurrentView] = useState<AppView>(() => {
+    if (isNewSession) {
+      // New session: start from upload page
+      return "upload";
+    }
+    // Page refresh: restore previous view
     const saved = localStorage.getItem("currentView");
     return (saved as AppView) || "upload";
   });
   const [textSize, setTextSize] = useState(1);
   const [currentTestDay, setCurrentTestDay] = useState<number>(1);
   const [studyEnded, setStudyEnded] = useState(() => {
+    if (isNewSession) return false;
     const saved = localStorage.getItem("studyEnded");
     return saved === "true";
   });
   const [uploadedFile, setUploadedFile] = useState<File | null>(() => {
+    if (isNewSession) return null;
     const saved = localStorage.getItem("uploadedFileName");
     return saved ? { name: saved } as File : null;
   });
   const [completedTests, setCompletedTests] = useState<number[]>(() => {
+    if (isNewSession) return [];
     const saved = localStorage.getItem("completedTests");
     return saved ? JSON.parse(saved) : [];
   });
   const [testScores, setTestScores] = useState<Record<number, number>>(() => {
+    if (isNewSession) return {};
     const saved = localStorage.getItem("testScores");
     return saved ? JSON.parse(saved) : {};
   });
+  const [testResults, setTestResults] = useState<Record<number, { questions: Question[], answers: (number | null)[] }>>(() => {
+    if (isNewSession) return {};
+    const saved = localStorage.getItem("testResults");
+    return saved ? JSON.parse(saved) : {};
+  });
+  const [reviewTestDay, setReviewTestDay] = useState<number | null>(null);
+
+  // Set session marker on mount and clear old data if new session
+  useEffect(() => {
+    if (isNewSession) {
+      // Clear all localStorage data for a fresh start
+      localStorage.removeItem("currentView");
+      localStorage.removeItem("studyEnded");
+      localStorage.removeItem("uploadedFileName");
+      localStorage.removeItem("completedTests");
+      localStorage.removeItem("testScores");
+      localStorage.removeItem("testResults");
+    }
+    sessionStorage.setItem("appSession", "active");
+  }, [isNewSession]);
 
   // Save to localStorage whenever state changes
   useEffect(() => {
@@ -58,6 +91,10 @@ const Index = () => {
     localStorage.setItem("testScores", JSON.stringify(testScores));
   }, [testScores]);
 
+  useEffect(() => {
+    localStorage.setItem("testResults", JSON.stringify(testResults));
+  }, [testResults]);
+
   const handleUpload = (file: File) => {
     setUploadedFile(file);
     toast.success("PDF uploaded successfully! Generating your study plan...");
@@ -70,14 +107,22 @@ const Index = () => {
 
   const handleStartTest = (day: number) => {
     setCurrentTestDay(day);
+    setReviewTestDay(null);
     setCurrentView("quiz");
   };
 
-  const handleQuizComplete = (score: number) => {
+  const handleReviewTest = (day: number) => {
+    setCurrentTestDay(day);
+    setReviewTestDay(day);
+    setCurrentView("quiz");
+  };
+
+  const handleQuizComplete = (score: number, questions: Question[], answers: (number | null)[]) => {
     toast.success(`Test completed! Your score: ${score}%`);
-    // Mark current test as completed and store score
+    // Mark current test as completed and store score and results
     setCompletedTests((prev) => [...prev, currentTestDay]);
     setTestScores((prev) => ({ ...prev, [currentTestDay]: score }));
+    setTestResults((prev) => ({ ...prev, [currentTestDay]: { questions, answers } }));
     setCurrentView("dashboard");
   };
 
@@ -101,12 +146,14 @@ const Index = () => {
       setStudyEnded(false);
       setCompletedTests([]);
       setTestScores({});
+      setTestResults({});
       // Clear localStorage
       localStorage.removeItem("currentView");
       localStorage.removeItem("uploadedFileName");
       localStorage.removeItem("studyEnded");
       localStorage.removeItem("completedTests");
       localStorage.removeItem("testScores");
+      localStorage.removeItem("testResults");
       toast.success("Study deleted successfully");
     }
   };
@@ -132,6 +179,7 @@ const Index = () => {
         {currentView === "dashboard" && (
           <StudyDashboard
             onStartTest={handleStartTest}
+            onReviewTest={handleReviewTest}
             onOpenFlashcards={handleOpenFlashcards}
             studyTitle={uploadedFile?.name.replace(".pdf", "")}
             completedTests={completedTests}
@@ -141,17 +189,20 @@ const Index = () => {
 
         {currentView === "quiz" && (
           <Quiz
-            day={currentTestDay}
+            day={reviewTestDay ?? currentTestDay}
             onComplete={handleQuizComplete}
-            onBack={() => setCurrentView("dashboard")}
+            onBack={() => {
+              setReviewTestDay(null);
+              setCurrentView("dashboard");
+            }}
+            reviewMode={reviewTestDay !== null}
+            savedQuestions={reviewTestDay !== null ? testResults[reviewTestDay]?.questions : undefined}
+            savedAnswers={reviewTestDay !== null ? testResults[reviewTestDay]?.answers : undefined}
           />
         )}
 
         {currentView === "flashcards" && (
-          <Flashcard
-            onClose={handleCloseFlashcards}
-            adaptiveMode={!studyEnded}
-          />
+          <Flashcard onClose={handleCloseFlashcards} />
         )}
       </div>
     </ThemeProvider>

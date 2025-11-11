@@ -5,23 +5,27 @@ import { CheckCircle2, XCircle, ArrowRight, ArrowLeft, Loader2 } from "lucide-re
 import { Progress } from "@/components/ui/progress";
 import { getTest } from "@/api";
 import { toast } from "sonner";
-
-interface Question {
-  question: string;
-  options: string[];
-  correct_answer: number;
-}
+import { Question } from "@/types";
 
 interface QuizProps {
   day: number;
-  onComplete: (score: number) => void;
+  onComplete: (score: number, questions: Question[], answers: (number | null)[]) => void;
   onBack: () => void;
   reviewMode?: boolean;
+  savedQuestions?: Question[];
+  savedAnswers?: (number | null)[];
 }
 
-export const Quiz = ({ day, onComplete, onBack, reviewMode = false }: QuizProps) => {
+export const Quiz = ({ 
+  day, 
+  onComplete, 
+  onBack, 
+  reviewMode = false,
+  savedQuestions,
+  savedAnswers
+}: QuizProps) => {
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!reviewMode);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [answers, setAnswers] = useState<(number | null)[]>([]);
@@ -29,20 +33,29 @@ export const Quiz = ({ day, onComplete, onBack, reviewMode = false }: QuizProps)
 
   useEffect(() => {
     const fetchTest = async () => {
-      try {
-        setLoading(true);
-        const data = await getTest(day);
-        setQuestions(data.questions);
-        setAnswers(new Array(data.questions.length).fill(null));
-      } catch (error) {
-        toast.error("Failed to load test questions. Please try again.");
-        onBack();
-      } finally {
+      if (reviewMode && savedQuestions && savedAnswers) {
+        // Load saved test data for review
+        setQuestions(savedQuestions);
+        setAnswers(savedAnswers);
+        setSelectedAnswer(savedAnswers[0] ?? null);
         setLoading(false);
+      } else {
+        // Fetch new test from API
+        try {
+          setLoading(true);
+          const data = await getTest(day);
+          setQuestions(data.questions);
+          setAnswers(new Array(data.questions.length).fill(null));
+        } catch (error) {
+          toast.error("Failed to load test questions. Please try again.");
+          onBack();
+        } finally {
+          setLoading(false);
+        }
       }
     };
     fetchTest();
-  }, [day, onBack]);
+  }, [day, onBack, reviewMode, savedQuestions, savedAnswers]);
 
   if (loading) {
     return (
@@ -78,7 +91,7 @@ export const Quiz = ({ day, onComplete, onBack, reviewMode = false }: QuizProps)
         (answer, idx) => answer !== null && answer === questions[idx].correct_answer - 1
       ).length;
       const score = Math.round((correct / questions.length) * 100);
-      onComplete(score);
+      onComplete(score, questions, newAnswers);
     }
   };
 
@@ -171,7 +184,7 @@ export const Quiz = ({ day, onComplete, onBack, reviewMode = false }: QuizProps)
           </div>
 
           <div className="space-y-4">
-            {selectedAnswer !== null && (
+            {!reviewMode && selectedAnswer !== null && (
               <div className="flex justify-center">
                 <Button 
                   variant="outline" 
@@ -188,10 +201,27 @@ export const Quiz = ({ day, onComplete, onBack, reviewMode = false }: QuizProps)
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Previous
               </Button>
-              <Button onClick={handleNext} className="gap-2">
-                {currentQuestion === questions.length - 1 ? "Finish" : "Skip / Next"}
-                <ArrowRight className="h-4 w-4" />
-              </Button>
+              {reviewMode ? (
+                <Button 
+                  onClick={() => {
+                    if (currentQuestion < questions.length - 1) {
+                      setCurrentQuestion(currentQuestion + 1);
+                      setSelectedAnswer(answers[currentQuestion + 1] ?? null);
+                    } else {
+                      onBack();
+                    }
+                  }} 
+                  className="gap-2"
+                >
+                  {currentQuestion === questions.length - 1 ? "Back to Dashboard" : "Next"}
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button onClick={handleNext} className="gap-2">
+                  {currentQuestion === questions.length - 1 ? "Finish" : "Skip / Next"}
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
         </div>
