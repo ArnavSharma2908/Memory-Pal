@@ -13,7 +13,7 @@ def get_major_topics(outline_text: str) -> List[str]:
         prompt = f"""You have this outline of topics from a document:
 {outline_text}
 
-Identify and return ONLY the 8-9 most major, important topics that should be studied first. These should be the main chapters/sections, not sub-topics.
+Identify and return ONLY the 8-9 most major, important topics that should be studied first. These should be the main chapters/sections, not sub-topics. Ensure that each topic indicates the title for example if the title is Biotech and topic is Conclusion then return Biotech Conclusion or if topic is ethics then particlar topic should be Biotech Ethics. Its better if topic names are more descriptive rather than small lengths.
 
 Return ONLY a JSON array of strings, no markdown:
 ["Topic 1", "Topic 2", "Topic 3", "Topic 4"]"""
