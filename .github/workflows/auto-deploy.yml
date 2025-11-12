@@ -1,0 +1,30 @@
+name: Auto Deploy to EC2
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_SSH_PORT || '22' }}
+          script: |
+            set -e
+            REPO_DIR=${{ secrets.REPO_DIR }}
+            if [ -z "$REPO_DIR" ]; then
+              echo "REPO_DIR secret is not set" >&2
+              exit 1
+            fi
+            cd "$REPO_DIR"
+            git fetch --all
+            git reset --hard origin/main
+            # Ensure docker and docker compose are available on the host
+            docker compose pull || true
+            docker compose up -d --build
