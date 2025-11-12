@@ -27,4 +27,9 @@ jobs:
             git reset --hard origin/main
             # Ensure docker and docker compose are available on the host
             docker compose pull || true
+            # stop and remove existing services to avoid port conflicts
+            docker compose down --remove-orphans --volumes || true
+            # show current containers (for debugging in workflow logs)
+            docker ps -a || true
+            # start services freshly
             docker compose up -d --build
