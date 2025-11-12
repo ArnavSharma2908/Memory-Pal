@@ -13,19 +13,20 @@ services:
     restart: unless-stopped
 
   frontend:
-  build:
-    context: ./frontend
-    dockerfile: Dockerfile
-  image: memorypal_frontend:latest
-  container_name: memorypal_frontend
-  ports:
-    - "80:80"
-  environment:
-    - VITE_API_BASE=http://backend:8000
-  depends_on:
-    - backend
-  restart: unless-stopped
-
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: memorypal_frontend:latest
+    container_name: memorypal_frontend
+    # map host port 80 to container port 8080 (frontend dev server listens on 8080)
+    ports:
+      - "80:8080"
+    environment:
+      # point the frontend to the backend service (Docker network) for internal calls
+      - VITE_API_BASE=http://backend:8000
+    depends_on:
+      - backend
+    restart: unless-stopped
 
 # Notes:
 # - Place a `.env` file in `backend/` with COHERE_API_KEY and any other env vars.
