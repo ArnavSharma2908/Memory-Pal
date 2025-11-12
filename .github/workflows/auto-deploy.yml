@@ -31,5 +31,14 @@ jobs:
             docker compose down --remove-orphans --volumes || true
             # show current containers (for debugging in workflow logs)
             docker ps -a || true
+            # forcibly remove any containers binding the common app ports (8000, 8080)
+            for port in 8000 8080; do
+              echo "Checking for containers binding port $port"
+              CIDS=$(docker ps --format '{{.ID}} {{.Ports}}' | awk -v p=":${port}->" '$0 ~ p {print $1}') || true
+              if [ -n "$CIDS" ]; then
+                echo "Removing containers: $CIDS"
+                docker rm -f $CIDS || true
+              fi
+            done
             # start services freshly
             docker compose up -d --build
