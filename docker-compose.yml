@@ -18,9 +18,9 @@ services:
       dockerfile: Dockerfile
     image: memorypal_frontend:latest
     container_name: memorypal_frontend
-    # map host port 80 to container port 8080 (frontend dev server listens on 8080)
+    # map host port 8080 to container port 8080 (serve frontend on host:8080)
     ports:
-      - "80:8080"
+      - "8080:8080"
     # frontend will determine API base at runtime (tries localhost then EC2 IP)
     depends_on:
       - backend

@@ -14,5 +14,6 @@ WORKDIR /app
 RUN npm install -g serve
 COPY --from=build /app/dist ./dist
 
-EXPOSE 80
-CMD ["serve", "-s", "dist", "-l", "80"]
+EXPOSE 8080
+# serve static build on port 8080 so host:8080 works
+CMD ["serve", "-s", "dist", "-l", "8080"]
