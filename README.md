@@ -4,6 +4,10 @@ An AI-powered adaptive learning platform that transforms your PDFs into personal
 
 ---
 
+## ⚡Live (AWS EC2 t2.micro):
+- Frontend: http://43.204.227.202:8080/
+- Backend:  http://43.204.227.202:8000/
+
 ## ✨ Features
 
 - � **PDF Processing**: Upload any PDF and extract meaningful content
@@ -131,10 +135,6 @@ docker compose up -d --build
 Access after running:
 - Frontend: http://localhost:8080
 - Backend: http://localhost:8000
-
-Live (AWS EC2 t2.micro):
-- Frontend: http://43.204.227.202:8080/
-- Backend:  http://43.204.227.202:8000/
 
 To stop: `docker compose down`
 
