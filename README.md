@@ -114,7 +114,33 @@ npm run dev
 
 ---
 
-## 📂 Project Structure
+## � Run with Docker Compose (alternative)
+
+Prefer running the whole app with Docker? Quick steps:
+
+1. Initialize backend `.env` (replace with your real key):
+```bash
+COHERE_API_KEY=your_cohere_api_key_here
+```
+
+2. From project root start services:
+```bash
+docker compose up -d --build
+```
+
+Access after running:
+- Frontend: http://localhost:8080
+- Backend: http://localhost:8000
+
+Live (AWS EC2 t2.micro):
+- Frontend: http://43.204.227.202:8080/
+- Backend:  http://43.204.227.202:8000/
+
+To stop: `docker compose down`
+
+---
+
+## �📂 Project Structure
 
 ```
 📦 Sem 5 Mini Project

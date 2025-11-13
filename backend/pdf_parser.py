@@ -73,7 +73,7 @@ def parse(pdf_bytes, metadata=None) -> List[Dict[str, str]]:
         outline_text = ", ".join(l["text"].strip() for l in lines if l.get("level") in (1, 2)) or "No outline"
         
         major_topics = get_major_topics(outline_text)
-        print(major_topics,outline_text,sep="\n")
+        #print(major_topics,outline_text,sep="\n")
         return major_topics
     except Exception as e:
         return []
