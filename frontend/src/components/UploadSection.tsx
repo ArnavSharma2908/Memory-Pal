@@ -82,7 +82,7 @@ export const UploadSection = ({ onUpload }: UploadSectionProps) => {
             <FileText className="w-10 h-10 text-primary-foreground" />
           </div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-            Welcome to Memory-Pal
+            Welcome to Memory-Palo
           </h1>
           <p className="text-lg text-muted-foreground max-w-md mx-auto">
             Upload your PDF study material and get an AI-powered 7-day adaptive learning plan
